@@ -1,6 +1,7 @@
 package me.noramibu.tweaks;
 
 import me.noramibu.tweaks.category.CustomCategoryManager;
+import me.noramibu.tweaks.category.ModuleLayoutManager;
 import me.noramibu.tweaks.modules.AutoDirtPath;
 import me.noramibu.tweaks.modules.AutoFarming;
 import me.noramibu.tweaks.modules.AutoFarmLand;
@@ -50,6 +51,7 @@ public class NoraTweaks extends MeteorAddon {
         LOG.info("Initializing Nora's Tweaks");
 
         CustomCategoryManager.init();
+        ModuleLayoutManager.init();
 
         // Modules
         Modules.get().add(new AutoDirtPath());
