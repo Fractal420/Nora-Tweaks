@@ -2,7 +2,6 @@ package me.noramibu.tweaks.mixin;
 
 import me.noramibu.tweaks.category.ModuleDragController;
 import meteordevelopment.meteorclient.gui.WidgetScreen;
-import meteordevelopment.meteorclient.gui.renderer.GuiRenderer;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,32 +32,6 @@ public abstract class WidgetScreenDragMixin {
             } catch (Throwable t) {
                 ModuleDragController.endDrag(click.x(), click.y());
             }
-        }
-    }
-
-    @Inject(method = "runAfterRenderTasks", at = @At("HEAD"), require = 0)
-    private void nora$dragOverlay(CallbackInfo ci) {
-        if (!ModuleDragController.isDragging()) return;
-        try {
-            GuiRenderer renderer = getStaticRenderer();
-            if (renderer == null) return;
-            var mc = meteordevelopment.meteorclient.MeteorClient.mc;
-            double s = mc.getWindow().getGuiScale();
-            double mx = mc.mouseHandler.xpos() * s;
-            double my = mc.mouseHandler.ypos() * s;
-            ModuleDragController.renderOverlay(renderer, mx, my);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private static GuiRenderer getStaticRenderer() {
-        try {
-            java.lang.reflect.Field f = WidgetScreen.class.getDeclaredField("RENDERER");
-            f.setAccessible(true);
-            Object val = f.get(null);
-            return val instanceof GuiRenderer r ? r : null;
-        } catch (Throwable t) {
-            return null;
         }
     }
 }

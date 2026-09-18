@@ -12,19 +12,28 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT;
+import static com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_MIDDLE;
 
 @Mixin(value = WPressable.class, remap = false)
 public abstract class WModuleDragMixin extends WWidget {
     @Shadow protected boolean pressed;
 
-    @Inject(method = "onMouseClicked", at = @At("HEAD"), require = 0)
+    @Inject(method = "onMouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
     private void nora$onModuleMouseClicked(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
-        if (click.button() != MOUSE_BUTTON_LEFT) return;
         if (!mouseOver) return;
 
         Module module = ModuleDragController.extractModule((WWidget) (Object) this);
         if (module == null) return;
 
+        if (click.button() == MOUSE_BUTTON_MIDDLE) {
+            if (ModuleDragController.removeFromCustomCategory(module, (WWidget) (Object) this)) {
+                pressed = false;
+                cir.setReturnValue(true);
+            }
+            return;
+        }
+
+        if (click.button() != MOUSE_BUTTON_LEFT) return;
         ModuleDragController.beginPotentialDrag(module, (WWidget) (Object) this, click.x(), click.y());
     }
 

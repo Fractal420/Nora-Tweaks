@@ -28,9 +28,90 @@ public class ModuleLayoutManager {
 
     private static final Map<String, String> overrides = new HashMap<>();
     private static final Map<String, List<String>> orders = new LinkedHashMap<>();
+    private static final java.util.Set<String> hiddenDefaultCategories = new java.util.HashSet<>();
 
     public static void init() {
         load();
+    }
+
+    public static boolean isDefaultCategoryHidden(String categoryName) {
+        if (categoryName == null || categoryName.isEmpty()) return false;
+        if (hiddenDefaultCategories.contains(categoryName)) return true;
+        for (String hidden : hiddenDefaultCategories) {
+            if (hidden != null && hidden.equalsIgnoreCase(categoryName)) return true;
+        }
+        return false;
+    }
+
+    public static boolean isDefaultCategoryHidden(Category category) {
+        return category != null && isDefaultCategoryHidden(category.name);
+    }
+
+    public static void setDefaultCategoryHidden(String categoryName, boolean hidden) {
+        if (categoryName == null || categoryName.isEmpty()) return;
+        hiddenDefaultCategories.removeIf(s -> s != null && s.equalsIgnoreCase(categoryName));
+        if (hidden) hiddenDefaultCategories.add(categoryName);
+        save();
+        postChange();
+    }
+
+    public static void toggleDefaultCategoryHidden(String categoryName) {
+        setDefaultCategoryHidden(categoryName, !isDefaultCategoryHidden(categoryName));
+    }
+
+    public static java.util.Set<String> getHiddenDefaultCategories() {
+        return java.util.Collections.unmodifiableSet(hiddenDefaultCategories);
+    }
+
+    public static List<Category> getAllDefaultCategories() {
+        List<Category> list = new ArrayList<>();
+        try {
+            for (Category category : Modules.loopCategories()) {
+                list.add(category);
+            }
+        } catch (Throwable ignored) {
+        }
+        return list;
+    }
+
+    public static void stripHiddenCategoryWindows(meteordevelopment.meteorclient.gui.widgets.containers.WContainer container, List<meteordevelopment.meteorclient.gui.widgets.containers.WWindow> windows) {
+        if (container == null) return;
+        try {
+            if (windows != null) {
+                windows.removeIf(w -> w == null || isHiddenWindow(w));
+            }
+            java.util.List<meteordevelopment.meteorclient.gui.utils.Cell<?>> toRemove = new java.util.ArrayList<>();
+            for (meteordevelopment.meteorclient.gui.utils.Cell<?> cell : container.cells) {
+                if (cell == null || cell.widget() == null) {
+                    toRemove.add(cell);
+                    continue;
+                }
+                if (cell.widget() instanceof meteordevelopment.meteorclient.gui.widgets.containers.WWindow window && isHiddenWindow(window)) {
+                    toRemove.add(cell);
+                }
+            }
+            for (meteordevelopment.meteorclient.gui.utils.Cell<?> cell : toRemove) {
+                container.remove(cell);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static boolean isHiddenWindow(meteordevelopment.meteorclient.gui.widgets.containers.WWindow window) {
+        if (window == null) return true;
+        if (window.id != null && !window.id.isEmpty()) {
+            if (window.id.startsWith("custom-")) return false;
+            if ("search".equalsIgnoreCase(window.id) || "favorites".equalsIgnoreCase(window.id)) return false;
+            if (isDefaultCategoryHidden(window.id)) return true;
+        }
+        try {
+            java.lang.reflect.Field titleField = meteordevelopment.meteorclient.gui.widgets.containers.WWindow.class.getDeclaredField("title");
+            titleField.setAccessible(true);
+            Object title = titleField.get(window);
+            if (title instanceof String s && isDefaultCategoryHidden(s)) return true;
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 
     public static String getDisplayCategory(Module module) {
@@ -46,6 +127,7 @@ public class ModuleLayoutManager {
 
     public static List<Module> getModulesForDefaultCategory(Category category) {
         if (category == null) return new ArrayList<>();
+        if (isDefaultCategoryHidden(category)) return new ArrayList<>();
         String catName = category.name;
 
         List<Module> result = new ArrayList<>();
@@ -74,18 +156,6 @@ public class ModuleLayoutManager {
             }
             if (module.category != null && module.category.name.equals(catName)) continue;
             if (!result.contains(module)) result.add(module);
-        }
-
-        List<String> order = orders.get(catName);
-        if (order != null && !order.isEmpty()) {
-            result.sort((a, b) -> {
-                int ia = order.indexOf(a.name);
-                int ib = order.indexOf(b.name);
-                if (ia < 0) ia = Integer.MAX_VALUE;
-                if (ib < 0) ib = Integer.MAX_VALUE;
-                if (ia != ib) return Integer.compare(ia, ib);
-                return a.title.compareToIgnoreCase(b.title);
-            });
         }
 
         return result;
@@ -119,8 +189,8 @@ public class ModuleLayoutManager {
 
     public static void moveModule(Module module, String fromCategoryKey, String toCategoryKey, int insertIndex) {
         if (module == null || toCategoryKey == null) return;
+        if (!isCustomKey(toCategoryKey)) return;
 
-        boolean toCustom = isCustomKey(toCategoryKey);
         boolean fromCustom = fromCategoryKey != null && isCustomKey(fromCategoryKey);
         String toName = stripCustomKey(toCategoryKey);
         String fromName = fromCategoryKey != null ? stripCustomKey(fromCategoryKey) : null;
@@ -132,32 +202,16 @@ public class ModuleLayoutManager {
                 configs.removeIf(mc -> mc.moduleName.equals(module.name));
             }
             removeFromOrder(fromCategoryKey, module.name);
-        } else if (fromName != null) {
-            removeFromOrder(fromName, module.name);
         }
 
-        if (toCustom) {
-            CustomCategory toCat = findCustom(toName);
-            if (toCat != null) {
-                List<ModuleConfig> configs = getConfigs(toCat);
-                if (configs.stream().noneMatch(mc -> mc.moduleName.equals(module.name))) {
-                    configs.add(new ModuleConfig(module.name));
-                }
+        CustomCategory toCat = findCustom(toName);
+        if (toCat != null) {
+            List<ModuleConfig> configs = getConfigs(toCat);
+            if (configs.stream().noneMatch(mc -> mc.moduleName.equals(module.name))) {
+                configs.add(new ModuleConfig(module.name));
             }
-            overrides.put(module.name, toName);
-            insertIntoOrder(toCategoryKey, module.name, insertIndex);
-        } else {
-            for (CustomCategory cat : CustomCategoryManager.getCategories()) {
-                List<ModuleConfig> configs = getConfigs(cat);
-                configs.removeIf(mc -> mc.moduleName.equals(module.name));
-            }
-            if (module.category != null && module.category.name.equals(toName)) {
-                overrides.remove(module.name);
-            } else {
-                overrides.put(module.name, toName);
-            }
-            insertIntoOrder(toName, module.name, insertIndex);
         }
+        insertIntoOrder(toCategoryKey, module.name, insertIndex);
 
         save();
         CustomCategoryManager.save();
@@ -166,31 +220,37 @@ public class ModuleLayoutManager {
 
     public static void reorderWithin(String categoryKey, Module module, int insertIndex) {
         if (module == null || categoryKey == null) return;
+        if (!isCustomKey(categoryKey)) return;
+
         insertIntoOrder(categoryKey, module.name, insertIndex);
 
-        if (isCustomKey(categoryKey)) {
-            CustomCategory cat = findCustom(stripCustomKey(categoryKey));
-            if (cat != null) {
-                List<String> order = orders.get(categoryKey);
-                if (order != null) {
-                    List<ModuleConfig> configs = getConfigs(cat);
-                    for (int i = 0; i < order.size(); i++) {
-                        String name = order.get(i);
-                        for (ModuleConfig mc : configs) {
-                            if (mc.moduleName.equals(name)) {
-                                mc.weight = i * 10;
-                                break;
-                            }
+        CustomCategory cat = findCustom(stripCustomKey(categoryKey));
+        if (cat != null) {
+            List<String> order = orders.get(categoryKey);
+            if (order != null) {
+                List<ModuleConfig> configs = getConfigs(cat);
+                for (int i = 0; i < order.size(); i++) {
+                    String name = order.get(i);
+                    for (ModuleConfig mc : configs) {
+                        if (mc.moduleName.equals(name)) {
+                            mc.weight = i * 10;
+                            break;
                         }
                     }
-                    cat.sortOrder = SortOrder.WEIGHT;
                 }
+                cat.sortOrder = SortOrder.WEIGHT;
             }
         }
 
         save();
         CustomCategoryManager.save();
         postChange();
+    }
+
+    public static void removeModuleFromCustomOrder(String categoryKey, String moduleName) {
+        if (categoryKey == null || moduleName == null) return;
+        removeFromOrder(categoryKey, moduleName);
+        save();
     }
 
     public static String categoryKeyForWindow(String windowId) {
@@ -247,20 +307,56 @@ public class ModuleLayoutManager {
         try {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc == null) return;
+            mc.execute(() -> refreshOpenModulesScreens(mc));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static boolean refreshingModulesScreen;
+
+    public static void refreshOpenModulesScreens(net.minecraft.client.Minecraft mc) {
+        if (refreshingModulesScreen) return;
+        try {
+            meteordevelopment.meteorclient.gui.GuiTheme theme =
+                meteordevelopment.meteorclient.gui.GuiThemes.get();
+            if (theme == null) return;
+
             Object current = currentScreen(mc);
             if (current == null) return;
-            if (!current.getClass().getName().contains("ModulesScreen")) return;
-            mc.execute(() -> {
+
+            java.lang.reflect.Field parentField =
+                meteordevelopment.meteorclient.gui.WidgetScreen.class.getField("parent");
+
+            String name = current.getClass().getName();
+            if (name.contains("ModulesScreen") && current instanceof meteordevelopment.meteorclient.gui.WidgetScreen currentWs) {
+                refreshingModulesScreen = true;
                 try {
-                    meteordevelopment.meteorclient.gui.GuiTheme theme =
-                        meteordevelopment.meteorclient.gui.GuiThemes.get();
-                    if (theme == null) return;
-                    net.minecraft.client.gui.screens.Screen next = theme.modulesScreen();
-                    if (next != null) mc.setScreenAndShow(next);
-                } catch (Throwable ignored) {
+                    net.minecraft.client.gui.screens.Screen fresh = theme.modulesScreen();
+                    if (fresh == null) return;
+                    if (fresh instanceof meteordevelopment.meteorclient.gui.WidgetScreen freshWs) {
+                        freshWs.parent = currentWs.parent;
+                    }
+                    mc.setScreenAndShow(fresh);
+                } finally {
+                    refreshingModulesScreen = false;
                 }
-            });
+                return;
+            }
+
+            if (current instanceof meteordevelopment.meteorclient.gui.WidgetScreen widgetScreen) {
+                Object parent = parentField.get(widgetScreen);
+                if (parent != null && parent.getClass().getName().contains("ModulesScreen")
+                    && parent instanceof meteordevelopment.meteorclient.gui.WidgetScreen parentWs) {
+                    net.minecraft.client.gui.screens.Screen fresh = theme.modulesScreen();
+                    if (fresh == null) return;
+                    if (fresh instanceof meteordevelopment.meteorclient.gui.WidgetScreen freshWs) {
+                        freshWs.parent = parentWs.parent;
+                    }
+                    parentField.set(widgetScreen, fresh);
+                }
+            }
         } catch (Throwable ignored) {
+            refreshingModulesScreen = false;
         }
     }
 
@@ -293,7 +389,7 @@ public class ModuleLayoutManager {
 
     public static void save() {
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(FILE), StandardCharsets.UTF_8)) {
-            LayoutData data = new LayoutData(overrides, orders);
+            LayoutData data = new LayoutData(overrides, orders, hiddenDefaultCategories);
             GSON.toJson(data, writer);
         } catch (IOException e) {
             NoraTweaks.LOG.error("Failed to save module layout", e);
@@ -308,6 +404,10 @@ public class ModuleLayoutManager {
             if (data == null) return;
             if (data.overrides != null) overrides.putAll(data.overrides);
             if (data.orders != null) orders.putAll(data.orders);
+            if (data.hiddenDefaultCategories != null) {
+                hiddenDefaultCategories.clear();
+                hiddenDefaultCategories.addAll(data.hiddenDefaultCategories);
+            }
         } catch (IOException e) {
             NoraTweaks.LOG.error("Failed to load module layout", e);
         }
@@ -316,10 +416,12 @@ public class ModuleLayoutManager {
     private static class LayoutData {
         Map<String, String> overrides;
         Map<String, List<String>> orders;
+        java.util.Set<String> hiddenDefaultCategories;
 
-        LayoutData(Map<String, String> overrides, Map<String, List<String>> orders) {
+        LayoutData(Map<String, String> overrides, Map<String, List<String>> orders, java.util.Set<String> hiddenDefaultCategories) {
             this.overrides = overrides;
             this.orders = orders;
+            this.hiddenDefaultCategories = hiddenDefaultCategories;
         }
     }
 }

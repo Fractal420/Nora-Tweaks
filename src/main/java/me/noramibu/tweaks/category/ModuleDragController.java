@@ -1,7 +1,5 @@
 package me.noramibu.tweaks.category;
 
-import meteordevelopment.meteorclient.gui.GuiTheme;
-import meteordevelopment.meteorclient.gui.GuiThemes;
 import meteordevelopment.meteorclient.gui.renderer.GuiRenderer;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.gui.widgets.containers.WContainer;
@@ -11,10 +9,10 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 
 import java.lang.reflect.Field;
-import java.util.List;
 
 public class ModuleDragController {
     private static final double DRAG_THRESHOLD = 6.0;
+    private static final Color HIGHLIGHT = new Color(100, 200, 140, 100);
 
     private static Module module;
     private static String sourceCategoryKey;
@@ -27,6 +25,8 @@ public class ModuleDragController {
     private static int insertIndex = -1;
     private static String targetCategoryKey;
     private static WWindow targetWindow;
+    private static boolean validDrop;
+    private static WWidget hoverTargetWidget;
 
     public static boolean isDragging() {
         return dragging;
@@ -38,6 +38,15 @@ public class ModuleDragController {
 
     public static Module getModule() {
         return module;
+    }
+
+    public static boolean isHoverTarget(WWidget widget) {
+        return dragging && validDrop && widget != null && widget == hoverTargetWidget;
+    }
+
+    public static void renderHoverHighlight(GuiRenderer renderer, WWidget widget) {
+        if (!isHoverTarget(widget) || renderer == null) return;
+        renderer.quad(widget.x, widget.y, widget.width, widget.height, HIGHLIGHT);
     }
 
     public static boolean beginPotentialDrag(Module mod, WWidget widget, double mx, double my) {
@@ -54,6 +63,8 @@ public class ModuleDragController {
         insertIndex = -1;
         targetCategoryKey = null;
         targetWindow = null;
+        validDrop = false;
+        hoverTargetWidget = null;
         return true;
     }
 
@@ -84,7 +95,7 @@ public class ModuleDragController {
         boolean didDrag = dragging;
         if (dragging && module != null) {
             resolveDropTarget(mx, my);
-            if (targetCategoryKey != null && targetWindow != null) {
+            if (validDrop && targetCategoryKey != null && targetWindow != null) {
                 if (targetCategoryKey.equals(sourceCategoryKey)) {
                     ModuleLayoutManager.reorderWithin(sourceCategoryKey, module, insertIndex);
                 } else {
@@ -108,6 +119,25 @@ public class ModuleDragController {
         reset();
     }
 
+    public static boolean removeFromCustomCategory(Module mod, WWidget widget) {
+        if (mod == null || widget == null) return false;
+        String key = resolveCategoryKey(widget);
+        if (key == null || !ModuleLayoutManager.isCustomKey(key)) return false;
+        String name = ModuleLayoutManager.stripCustomKey(key);
+        CustomCategory category = null;
+        for (CustomCategory c : CustomCategoryManager.getCategories()) {
+            if (c.name.equals(name)) {
+                category = c;
+                break;
+            }
+        }
+        if (category == null) return false;
+        if (!CustomCategoryManager.isModuleInCategory(mod, category)) return false;
+        CustomCategoryManager.toggleModuleAssignment(mod, category);
+        ModuleLayoutManager.removeModuleFromCustomOrder(key, mod.name);
+        return true;
+    }
+
     private static void reset() {
         module = null;
         sourceWidget = null;
@@ -117,87 +147,16 @@ public class ModuleDragController {
         insertIndex = -1;
         targetCategoryKey = null;
         targetWindow = null;
-    }
-
-    public static void renderOverlay(GuiRenderer renderer, double mx, double my) {
-        if (!dragging || module == null) return;
-
-        GuiTheme theme = GuiThemes.get();
-        if (theme == null) return;
-
-        String title = module.title;
-        double pad = theme.scale(4);
-        double textW = theme.textWidth(title);
-        double w = pad + textW + pad;
-        double h = pad + theme.textHeight() + pad;
-        double x = mx + 12;
-        double y = my + 12;
-
-        Color bg = new Color(30, 30, 30, 200);
-        Color border = targetCategoryKey != null
-            ? new Color(100, 200, 120, 220)
-            : new Color(200, 80, 80, 220);
-        Color text = new Color(255, 255, 255, 255);
-
-        renderer.quad(x, y, w, h, bg);
-        renderer.quad(x, y, 2, h, border);
-        renderer.text(title, x + pad, y + pad, text, false);
-
-        if (targetWindow != null && insertIndex >= 0) {
-            drawInsertMarker(renderer, targetWindow, insertIndex, border);
-        }
-    }
-
-    private static void drawInsertMarker(GuiRenderer renderer, WWindow window, int index, Color color) {
-        WView view = window.view;
-        if (view == null) return;
-
-        List<?> cells = view.cells;
-        double markerY;
-        double markerX = window.x + 2;
-        double markerW = Math.max(4, window.width - 4);
-
-        if (cells == null || cells.isEmpty()) {
-            markerY = window.y + window.height * 0.5;
-        } else if (index <= 0) {
-            WWidget first = cellWidget(cells.get(0));
-            markerY = first != null ? first.y : window.y + 20;
-        } else if (index >= cells.size()) {
-            WWidget last = cellWidget(cells.get(cells.size() - 1));
-            markerY = last != null ? last.y + last.height : window.y + window.height - 4;
-        } else {
-            WWidget at = cellWidget(cells.get(index));
-            markerY = at != null ? at.y : window.y + 20;
-        }
-
-        renderer.quad(markerX, markerY - 1, markerW, 2, color);
-    }
-
-    private static WWidget cellWidget(Object cell) {
-        if (cell == null) return null;
-        try {
-            Field f = cell.getClass().getField("widget");
-            Object w = f.get(cell);
-            return w instanceof WWidget widget ? widget : null;
-        } catch (Throwable t) {
-            try {
-                Field f = cell.getClass().getDeclaredField("widget");
-                f.setAccessible(true);
-                Object w = f.get(cell);
-                return w instanceof WWidget widget ? widget : null;
-            } catch (Throwable ignored) {
-                return null;
-            }
-        }
+        validDrop = false;
+        hoverTargetWidget = null;
     }
 
     private static void resolveDropTarget(double mx, double my) {
         targetCategoryKey = null;
         targetWindow = null;
         insertIndex = -1;
-
-        WWindow best = null;
-        String bestKey = null;
+        validDrop = false;
+        hoverTargetWidget = null;
 
         WWidget root = sourceWidget;
         while (root != null && root.parent != null) root = root.parent;
@@ -215,10 +174,12 @@ public class ModuleDragController {
                     String key = categoryKeyFromWindow(window);
                     if (key == null) continue;
                     if ("search".equals(key) || "favorites".equals(key)) continue;
+                    if (!ModuleLayoutManager.isCustomKey(key)) continue;
 
                     targetWindow = window;
                     targetCategoryKey = key;
-                    insertIndex = computeInsertIndex(window, my);
+                    validDrop = true;
+                    resolveHoverModule(window, my);
                     return;
                 }
             }
@@ -229,33 +190,62 @@ public class ModuleDragController {
         }
     }
 
-    private static boolean isPointInWindow(WWindow window, double mx, double my) {
-        return mx >= window.x && mx <= window.x + window.width
-            && my >= window.y && my <= window.y + window.height;
-    }
-
-    private static int computeInsertIndex(WWindow window, double my) {
+    private static void resolveHoverModule(WWindow window, double my) {
         WView view = window.view;
-        if (view == null || view.cells.isEmpty()) return 0;
+        if (view == null || view.cells.isEmpty()) {
+            insertIndex = 0;
+            return;
+        }
 
-        int index = view.cells.size();
+        WWidget lastModuleWidget = null;
+        int lastModuleIndex = -1;
+        WWidget chosen = null;
+        int index = 0;
+
         for (int i = 0; i < view.cells.size(); i++) {
             WWidget w = view.cells.get(i).widget();
-            if (w == null) continue;
-            double mid = w.y + w.height / 2.0;
-            if (my < mid) {
+            if (w == null || extractModule(w) == null) continue;
+            lastModuleWidget = w;
+            lastModuleIndex = i;
+
+            if (my >= w.y && my <= w.y + w.height) {
+                chosen = w;
+                if (my < w.y + w.height * 0.5) {
+                    index = i;
+                } else {
+                    index = i + 1;
+                }
+                break;
+            }
+
+            if (my < w.y) {
+                chosen = w;
                 index = i;
                 break;
             }
+
+            index = i + 1;
+            chosen = w;
         }
+
+        if (chosen == null && lastModuleWidget != null) {
+            chosen = lastModuleWidget;
+            index = lastModuleIndex + 1;
+        }
+
+        hoverTargetWidget = chosen;
 
         if (sourceCategoryKey != null && sourceCategoryKey.equals(targetCategoryKey) && module != null) {
             int sourceIdx = indexOfModuleInView(view, module);
-            if (sourceIdx >= 0 && index > sourceIdx) {
-                index--;
-            }
+            if (sourceIdx >= 0 && index > sourceIdx) index--;
         }
-        return Math.max(0, index);
+
+        insertIndex = Math.max(0, index);
+    }
+
+    private static boolean isPointInWindow(WWindow window, double mx, double my) {
+        return mx >= window.x && mx <= window.x + window.width
+            && my >= window.y && my <= window.y + window.height;
     }
 
     private static int indexOfModuleInView(WView view, Module mod) {
@@ -279,7 +269,7 @@ public class ModuleDragController {
         }
     }
 
-    private static String resolveCategoryKey(WWidget widget) {
+    public static String resolveCategoryKey(WWidget widget) {
         WWidget current = widget;
         while (current != null) {
             if (current instanceof WWindow window) {
