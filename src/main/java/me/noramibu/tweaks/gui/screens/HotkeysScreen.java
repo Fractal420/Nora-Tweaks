@@ -1,5 +1,6 @@
 package me.noramibu.tweaks.gui.screens;
 
+//? if >=26.1 {
 import me.noramibu.tweaks.modules.HotkeyUtility;
 import me.noramibu.tweaks.utils.Hotkey;
 import meteordevelopment.meteorclient.gui.GuiTheme;
@@ -58,3 +59,5 @@ public class HotkeysScreen extends WindowScreen {
         table.add(addButton).expandX();
     }
 }
+//?} else
+// public class HotkeysScreen {}

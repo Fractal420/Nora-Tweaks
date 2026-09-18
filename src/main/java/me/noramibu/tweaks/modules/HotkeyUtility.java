@@ -1,5 +1,6 @@
 package me.noramibu.tweaks.modules;
 
+//? if >=26.1 {
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -176,3 +177,5 @@ public class HotkeyUtility extends Module {
         }
     }
 }
+//?} else
+// public class HotkeyUtility {}

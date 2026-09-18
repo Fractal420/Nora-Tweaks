@@ -1,5 +1,6 @@
 package me.noramibu.tweaks.modules;
 
+//? if >=26.1 {
 /**
  * Original code written by @etianl https://github.com/etianl/Trouser-Streak/blob/main/src/main/java/pwn/noobs/trouserstreak/modules/MaceKill.java
  */
@@ -211,3 +212,5 @@ public class LegitMaceKill extends Module {
     }
 }
 
+//?} else
+// public class LegitMaceKill {}

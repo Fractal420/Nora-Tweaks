@@ -29,6 +29,7 @@ import org.joml.Vector3d;
 //? if >=1.21.11 {
 import meteordevelopment.meteorclient.utils.entity.simulator.ProjectileEntitySimulator;
 import meteordevelopment.meteorclient.utils.entity.simulator.SimulationStep;
+//?}
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
@@ -174,7 +175,11 @@ public class PearlChecker extends Module {
             if (!NametagUtils.to2D(pos, scale.get())) continue;
 
             NametagUtils.begin(pos);
+            //? if >=26.2 {
             text.beginBig(event.graphics);
+            //?} else
+            // text.beginBig();
+
 
             double w = text.getWidth(label);
             double x = -w / 2;

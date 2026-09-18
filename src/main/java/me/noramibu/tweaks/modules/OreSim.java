@@ -1,9 +1,3 @@
-/*
- * This code partially adapted from Meteor Rejects
- * Original source: https://github.com/AntiCope/meteor-rejects/
- * Credit: Meteor Rejects contributors
- * If Meteor Rejects gets updated, adapted features will get removed.
- */
 package me.noramibu.tweaks.modules;
 
 import me.noramibu.tweaks.NoraTweaks;
@@ -31,6 +25,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
+import me.noramibu.tweaks.utils.ChunkPosUtil;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -39,6 +34,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.phys.Vec3;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -50,7 +46,6 @@ public class OreSim extends Module {
     private String lastWorldName;
     private ResourceKey<Level> lastWorldKey;
 
-    // Ore positions for Baritone integration (accessed by MineProcessMixin)
     public List<BlockPos> oreGoals = new ArrayList<>();
 
     public enum AirCheck {
@@ -106,8 +101,8 @@ public class OreSim extends Module {
         if (mc.player == null || oreConfig == null) return;
         if (Seeds.get().getSeed() == null) return;
 
-        int chunkX = mc.player.chunkPosition().x();
-        int chunkZ = mc.player.chunkPosition().z();
+        int chunkX = ChunkPosUtil.x(mc.player.chunkPosition());
+        int chunkZ = ChunkPosUtil.z(mc.player.chunkPosition());
         int rangeVal = horizontalRadius.get();
 
         for (int range = 0; range <= rangeVal; range++) {
@@ -121,7 +116,7 @@ public class OreSim extends Module {
     }
 
     private void renderChunk(int x, int z, Render3DEvent event) {
-        long chunkKey = ChunkPos.pack(x, z);
+        long chunkKey = ChunkPosUtil.pack(x, z);
         Map<Ore, Set<Vec3>> chunk = chunkRenderers.get(chunkKey);
         if (chunk == null) return;
 
@@ -141,7 +136,7 @@ public class OreSim extends Module {
         int x = event.pos.getX();
         int y = event.pos.getY();
         int z = event.pos.getZ();
-        long chunkKey = ChunkPos.pack(x >> 4, z >> 4);
+        long chunkKey = ChunkPosUtil.pack(x >> 4, z >> 4);
         Map<Ore, Set<Vec3>> chunk = chunkRenderers.get(chunkKey);
         if (chunk == null) return;
 
@@ -161,11 +156,99 @@ public class OreSim extends Module {
 
         detectWorldChange();
 
-        // Keep OreSim goals warm so Baritone rescan hooks can consume them immediately.
         if (baritone()) {
             oreGoals.clear();
             oreGoals.addAll(getBaritoneGoals());
+            pushGoalsToBaritone(oreGoals);
         }
+    }
+
+    private static Field baritoneOreField;
+    private static boolean baritoneFieldLookupDone;
+    private static Object lastMineProcess;
+
+    private void pushGoalsToBaritone(List<BlockPos> goals) {
+        try {
+            Object baritone = null;
+            try {
+                Class<?> api = Class.forName("baritone.api.BaritoneAPI");
+                Object provider = api.getMethod("getProvider").invoke(null);
+                baritone = provider.getClass().getMethod("getPrimaryBaritone").invoke(provider);
+            } catch (Throwable ignored) {
+                return;
+            }
+            if (baritone == null) return;
+
+            Object mineProcess = null;
+            for (String getter : new String[]{"getMineProcess", "getGetToBlockProcess"}) {
+                try {
+                    mineProcess = baritone.getClass().getMethod(getter).invoke(baritone);
+                    if (mineProcess != null) break;
+                } catch (Throwable ignored) {
+                }
+            }
+            if (mineProcess == null) {
+                for (Field f : baritone.getClass().getDeclaredFields()) {
+                    f.setAccessible(true);
+                    Object val = f.get(baritone);
+                    if (val != null && val.getClass().getName().toLowerCase().contains("mine")) {
+                        mineProcess = val;
+                        break;
+                    }
+                }
+            }
+            if (mineProcess == null) return;
+
+            if (mineProcess != lastMineProcess) {
+                lastMineProcess = mineProcess;
+                baritoneFieldLookupDone = false;
+                baritoneOreField = null;
+            }
+
+            Field field = getBaritoneOreField(mineProcess.getClass());
+            if (field != null) {
+                field.set(mineProcess, new ArrayList<>(goals));
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static Field getBaritoneOreField(Class<?> clazz) {
+        if (baritoneFieldLookupDone) return baritoneOreField;
+        baritoneFieldLookupDone = true;
+        try {
+            Field f = clazz.getDeclaredField("knownOreLocations");
+            f.setAccessible(true);
+            baritoneOreField = f;
+            return f;
+        } catch (NoSuchFieldException ignored) {
+        }
+        Field firstList = null;
+        Field listBlockPos = null;
+        for (Field field : clazz.getDeclaredFields()) {
+            if (!List.class.isAssignableFrom(field.getType())) continue;
+            if (firstList == null) {
+                firstList = field;
+                firstList.setAccessible(true);
+            }
+            try {
+                var generic = field.getGenericType();
+                if (generic instanceof java.lang.reflect.ParameterizedType pt) {
+                    var args = pt.getActualTypeArguments();
+                    if (args.length > 0) {
+                        String n = args[0].getTypeName();
+                        if (n.contains("BlockPos") || n.contains("class_2338")) {
+                            listBlockPos = field;
+                            listBlockPos.setAccessible(true);
+                            break;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        baritoneOreField = listBlockPos != null ? listBlockPos : firstList;
+        return baritoneOreField;
     }
 
     /**
@@ -173,7 +256,7 @@ public class OreSim extends Module {
      */
     private ArrayList<BlockPos> addToBaritone(int chunkX, int chunkZ) {
         ArrayList<BlockPos> baritoneGoals = new ArrayList<>();
-        long chunkKey = ChunkPos.pack(chunkX, chunkZ);
+        long chunkKey = ChunkPosUtil.pack(chunkX, chunkZ);
         Map<Ore, Set<Vec3>> chunk = chunkRenderers.get(chunkKey);
         if (chunk != null) {
             chunk.entrySet().stream()
@@ -194,7 +277,7 @@ public class OreSim extends Module {
 
         for (int dx = -rangeVal; dx <= rangeVal; dx++) {
             for (int dz = -rangeVal; dz <= rangeVal; dz++) {
-                uniqueGoals.addAll(addToBaritone(chunkPos.x() + dx, chunkPos.z() + dz));
+                uniqueGoals.addAll(addToBaritone(ChunkPosUtil.x(chunkPos) + dx, ChunkPosUtil.z(chunkPos) + dz));
             }
         }
 
@@ -276,12 +359,12 @@ public class OreSim extends Module {
         if (chunk == null || mc.level == null || oreConfig == null || worldSeed == null) return;
 
         ChunkPos chunkPos = chunk.getPos();
-        long chunkKey = chunkPos.pack();
+        long chunkKey = ChunkPosUtil.pack(chunkPos);
         if (chunkRenderers.containsKey(chunkKey)) return;
 
         Set<ResourceKey<Biome>> biomeKeys = new HashSet<>();
         ChunkPos.rangeClosed(chunkPos, 1).forEach(pos -> {
-            ChunkAccess neighbour = mc.level.getChunk(pos.x(), pos.z(), ChunkStatus.BIOMES, false);
+            ChunkAccess neighbour = mc.level.getChunk(ChunkPosUtil.x(pos), ChunkPosUtil.z(pos), ChunkStatus.BIOMES, false);
             if (neighbour == null) return;
             for (LevelChunkSection section : neighbour.getSections()) {
                 section.getBiomes().getAll(entry -> biomeKeys.add(entry.unwrapKey().get()));
@@ -292,8 +375,8 @@ public class OreSim extends Module {
             .flatMap(biome -> getOresForBiome(biome).stream())
             .collect(Collectors.toSet());
 
-        int chunkX = chunkPos.x() << 4;
-        int chunkZ = chunkPos.z() << 4;
+        int chunkX = ChunkPosUtil.x(chunkPos) << 4;
+        int chunkZ = ChunkPosUtil.z(chunkPos) << 4;
         WorldgenRandom random = new WorldgenRandom(WorldgenRandom.Algorithm.XOROSHIRO.newInstance(0));
         long populationSeed = random.setDecorationSeed(worldSeed.seed, chunkX, chunkZ);
 

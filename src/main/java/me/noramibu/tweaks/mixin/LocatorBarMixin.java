@@ -1,6 +1,6 @@
-//? if >=1.21.7 {
 package me.noramibu.tweaks.mixin;
 
+//? if >=26.2 {
 import me.noramibu.tweaks.modules.BetterLocator;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoint;
@@ -255,11 +255,6 @@ public abstract class LocatorBarMixin {
         context.pose().popMatrix();
     }
 }
-//?} else {
-/*package me.noramibu.tweaks.mixin;
+//?} else
+// public class LocatorBarMixin {}
 
-// Stub class for versions before 1.21.7 where LocatorBar doesn't exist.
-// The MixinPlugin will skip applying this mixin.
-public class LocatorBarMixin {}
-*/
-//?}

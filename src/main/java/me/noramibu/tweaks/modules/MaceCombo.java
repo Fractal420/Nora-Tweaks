@@ -1,5 +1,6 @@
 package me.noramibu.tweaks.modules;
 
+//? if >=26.1 {
 import me.noramibu.tweaks.NoraTweaks;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
@@ -582,3 +583,5 @@ public class MaceCombo extends Module {
     }
 }
 
+//?} else
+// public class MaceCombo { public static boolean isUsingWindCharge = false; }

@@ -31,7 +31,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CocoaBlock;
 import net.minecraft.world.level.block.CropBlock;
+//? if >=26.1 {
 import net.minecraft.world.level.block.FarmlandBlock;
+//?}
 import net.minecraft.world.level.block.MushroomBlock;
 import net.minecraft.world.level.block.NetherWartBlock;
 import net.minecraft.world.level.block.PitcherCropBlock;
@@ -401,7 +403,7 @@ public class AutoFarming extends Module {
     private boolean tryPlant(BlockPos pos, Block block) {
         if (!plant.get()) return false;
         if (!mc.level.isEmptyBlock(pos.above())) return false;
-        if (!(block instanceof FarmlandBlock) && !(block instanceof SoulSandBlock)) return false;
+        if (!isFarmlandSoil(block) && !(block instanceof SoulSandBlock)) return false;
 
         FindItemResult findItemResult = null;
 
@@ -427,7 +429,7 @@ public class AutoFarming extends Module {
     }
 
     private FindItemResult findPlantableItem(Block soilBlock) {
-        if (soilBlock instanceof FarmlandBlock) {
+        if (isFarmlandSoil(soilBlock)) {
             return InvUtils.findInHotbar(stack -> {
                 Item item = stack.getItem();
                 return item != Items.NETHER_WART &&
@@ -444,6 +446,15 @@ public class AutoFarming extends Module {
         }
 
         return null;
+    }
+
+
+    private static boolean isFarmlandSoil(Block block) {
+        //? if >=26.1 {
+        if (block instanceof FarmlandBlock) return true;
+        //?}
+        String name = block.getClass().getName();
+        return name.endsWith(".FarmBlock") || name.endsWith(".FarmlandBlock");
     }
 
     private boolean tryBonemeal(BlockPos pos, BlockState state, Block block) {

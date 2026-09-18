@@ -13,6 +13,9 @@
   "icon": "assets/nora-tweaks/icon.png",
   "environment": "client",
   "entrypoints": {
+    "mixinsquared": [
+      "me.noramibu.tweaks.RejectsBaritoneCancel"
+    ],
     "meteor": [
       "me.noramibu.tweaks.NoraTweaks"
     ]
@@ -29,8 +32,8 @@
     }
   },
   "depends": {
-    "java": ">=25",
-    "minecraft": "~26.2",
+    "java": ">=21",
+    "minecraft": "${minecraft_version}",
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",
     "meteor-client": "*"

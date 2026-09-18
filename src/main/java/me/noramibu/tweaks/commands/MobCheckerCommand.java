@@ -4,7 +4,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import meteordevelopment.meteorclient.commands.Command;
-import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
@@ -24,7 +24,8 @@ public class MobCheckerCommand extends Command {
 	}
 
 	@Override
-	public void build(LiteralArgumentBuilder<ClientSuggestionProvider> builder) {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+    public void build(LiteralArgumentBuilder builder) {
 		builder.executes(ctx -> {
 			runCheck(DEFAULT_RANGE, null);
 			return SINGLE_SUCCESS;

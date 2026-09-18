@@ -6,7 +6,9 @@
  */
 package me.noramibu.tweaks.utils;
 
+//? if >=26.1 {
 import dev.xpple.cubiomes.Cubiomes;
+//?}
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.systems.System;
 import meteordevelopment.meteorclient.utils.Utils;
@@ -193,6 +195,7 @@ public class Seeds extends System<Seeds> {
 
     public static List<String> getSuggestedCubiomesVersions() {
         ArrayList<String> versions = new ArrayList<>();
+        //? if >=26.1 {
         for (Method method : Cubiomes.class.getMethods()) {
             if (!isCubiomesVersionMethod(method)) continue;
 
@@ -202,6 +205,7 @@ public class Seeds extends System<Seeds> {
             String publicName = toPublicVersionName(methodName);
             if (publicName != null) versions.add(publicName);
         }
+        //?}
         versions.sort(String.CASE_INSENSITIVE_ORDER);
         return versions;
     }
@@ -221,12 +225,16 @@ public class Seeds extends System<Seeds> {
     }
 
     private static int resolveCubiomesVersionId(String versionName) {
+        int id = 0;
+        //? if >=26.1 {
         String resolved = resolveStoredVersion(versionName);
         try {
-            return (int) Cubiomes.class.getMethod(resolved).invoke(null);
+            id = (int) Cubiomes.class.getMethod(resolved).invoke(null);
         } catch (ReflectiveOperationException ignored) {
-            return Cubiomes.MC_26_2();
+            id = Cubiomes.MC_26_2();
         }
+        //?}
+        return id;
     }
 
     public static String resolveForPublic(String input) {
@@ -247,11 +255,13 @@ public class Seeds extends System<Seeds> {
             majorMinorVersion(version)
         }) {
             if (candidate == null) continue;
+            //? if >=26.1 {
             try {
                 Cubiomes.class.getMethod(candidate);
                 return candidate;
             } catch (NoSuchMethodException ignored) {
             }
+            //?}
         }
         return null;
     }

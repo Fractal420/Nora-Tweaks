@@ -1,10 +1,6 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.api.file.DuplicatesStrategy
-
 plugins {
     id("dev.kikugie.stonecutter")
-    id("net.fabricmc.fabric-loom") version "1.17-SNAPSHOT"
-    id("com.gradleup.shadow") version "9.0.0-beta12"
+    id("net.fabricmc.fabric-loom-remap") version "1.17.20"
     id("maven-publish")
 }
 
@@ -18,7 +14,6 @@ val loaderVersion = prop("loader_version")
 val fabricApiVersion = prop("fabric_api_version")
 val meteorVersion = prop("meteor_version")
 val baritoneVersion = prop("baritone_version")
-val xppleCubiomesVersion = prop("xpple_cubiomes_version")
 val modVersion = prop("mod_version")
 val mavenGroup = prop("maven_group")
 val archivesBaseName = prop("archives_base_name")
@@ -42,25 +37,18 @@ repositories {
     mavenLocal()
 }
 
-val shade by configurations.creating
-configurations.named("implementation") {
-    extendsFrom(shade)
-}
-
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    implementation("net.fabricmc:fabric-loader:$loaderVersion")
-    implementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
-    compileOnly("meteordevelopment:meteor-client:$meteorVersion-SNAPSHOT")
+    mappings(loom.officialMojangMappings())
+    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
+    modCompileOnly("meteordevelopment:meteor-client:$meteorVersion-SNAPSHOT")
     compileOnly("meteordevelopment:orbit:0.2.4")
     compileOnly("meteordevelopment:baritone:$baritoneVersion-SNAPSHOT") {
         isTransitive = false
     }
     implementation("mixinsquared-fabric:mixinsquared-fabric:0.2.0")
     include("mixinsquared-fabric:mixinsquared-fabric:0.2.0")
-    shade("dev.xpple:cubiomes:$xppleCubiomesVersion") {
-        isTransitive = false
-    }
 }
 
 tasks {
@@ -81,35 +69,20 @@ tasks {
 
     withType<JavaCompile>().configureEach {
         options.encoding = "UTF-8"
-        options.release = 25
+        options.release = 21
         options.compilerArgs.add("-Xlint:deprecation")
         options.compilerArgs.add("-Xlint:unchecked")
     }
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_25
-        targetCompatibility = JavaVersion.VERSION_25
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         withSourcesJar()
     }
 
-    val shadowJar by getting(ShadowJar::class) {
-        configurations = listOf(shade)
-        archiveClassifier.set("")
+    jar {
         from(rootProject.file("LICENSE")) {
             rename { "${it}_$archivesBaseName" }
         }
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    }
-
-    named<Jar>("jar") {
-        enabled = false
-    }
-
-    matching { it.name == "remapJar" }.configureEach {
-        enabled = false
-    }
-
-    named("build") {
-        dependsOn(shadowJar)
     }
 }

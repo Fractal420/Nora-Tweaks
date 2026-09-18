@@ -6,11 +6,13 @@
  */
 package me.noramibu.tweaks.utils;
 
+//? if >=26.1 {
 import dev.xpple.cubiomes.Cubiomes;
 import dev.xpple.cubiomes.CubiomesInit;
 import dev.xpple.cubiomes.Generator;
 import dev.xpple.cubiomes.StrongholdIter;
 import dev.xpple.cubiomes.StructureConfig;
+//?}
 import me.noramibu.tweaks.utils.Seeds.Seed;
 import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import net.minecraft.core.BlockPos;
@@ -22,7 +24,11 @@ import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.entity.monster.Guardian;
 import net.minecraft.world.entity.monster.Shulker;
+//? if >=26.2 {
 import net.minecraft.world.entity.monster.cubemob.Slime;
+//?} else
+// import net.minecraft.world.entity.monster.Slime;
+
 import net.minecraft.world.entity.monster.illager.Evoker;
 import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.monster.skeleton.WitherSkeleton;
@@ -33,8 +39,10 @@ import net.minecraft.world.item.component.MapDecorations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+//? if >=26.1 {
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+//?}
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,6 +56,7 @@ public class WorldGenUtils {
     private static final Logger LOG = LogManager.getLogger();
     private static final int MAX_SEARCH_RADIUS_REGIONS = 2048;
     private static final boolean CUBIOMES_NATIVE_LOADED = loadCubiomesNative();
+
 
     private static final Map<Feature, List<Class<? extends Entity>>> FEATURE_ENTITIES = new HashMap<>() {{
         put(Feature.ocean_monument, Arrays.asList(ElderGuardian.class, Guardian.class));
@@ -83,40 +92,52 @@ public class WorldGenUtils {
     }
 
     public enum Structure {
-        FEATURE("feature", Cubiomes.Feature(), null),
-        DESERT_PYRAMID("desert_pyramid", Cubiomes.Desert_Pyramid(), Feature.desert_pyramid),
-        JUNGLE_TEMPLE("jungle_temple", Cubiomes.Jungle_Temple(), null),
-        SWAMP_HUT("swamp_hut", Cubiomes.Swamp_Hut(), null),
-        IGLOO("igloo", Cubiomes.Igloo(), null),
-        VILLAGE("village", Cubiomes.Village(), Feature.village),
-        OCEAN_RUIN("ocean_ruin", Cubiomes.Ocean_Ruin(), null),
-        SHIPWRECK("shipwreck", Cubiomes.Shipwreck(), null),
-        MONUMENT("monument", Cubiomes.Monument(), Feature.ocean_monument),
-        MANSION("mansion", Cubiomes.Mansion(), Feature.mansion),
-        OUTPOST("outpost", Cubiomes.Outpost(), null),
-        RUINED_PORTAL("ruined_portal", Cubiomes.Ruined_Portal(), null),
-        RUINED_PORTAL_N("ruined_portal_n", Cubiomes.Ruined_Portal_N(), null),
-        ANCIENT_CITY("ancient_city", Cubiomes.Ancient_City(), null),
-        TREASURE("treasure", Cubiomes.Treasure(), Feature.buried_treasure),
-        MINESHAFT("mineshaft", Cubiomes.Mineshaft(), Feature.mineshaft),
-        DESERT_WELL("desert_well", Cubiomes.Desert_Well(), null),
-        GEODE("geode", Cubiomes.Geode(), null),
-        FORTRESS("fortress", Cubiomes.Fortress(), Feature.nether_fortress),
-        BASTION("bastion", Cubiomes.Bastion(), Feature.bastion_remnant),
-        END_CITY("end_city", Cubiomes.End_City(), Feature.end_city),
-        END_GATEWAY("end_gateway", Cubiomes.End_Gateway(), null),
-        TRAIL_RUIN("trail_ruin", Cubiomes.Trail_Ruins(), null),
-        SLIME_CHUNK("slime_chunk", -1, Feature.slime_chunk),
-        STRONGHOLD("stronghold", Cubiomes.Stronghold(), Feature.stronghold);
+        FEATURE("feature", "Feature", null),
+        DESERT_PYRAMID("desert_pyramid", "Desert_Pyramid", Feature.desert_pyramid),
+        JUNGLE_TEMPLE("jungle_temple", "Jungle_Temple", null),
+        SWAMP_HUT("swamp_hut", "Swamp_Hut", null),
+        IGLOO("igloo", "Igloo", null),
+        VILLAGE("village", "Village", Feature.village),
+        OCEAN_RUIN("ocean_ruin", "Ocean_Ruin", null),
+        SHIPWRECK("shipwreck", "Shipwreck", null),
+        MONUMENT("monument", "Monument", Feature.ocean_monument),
+        MANSION("mansion", "Mansion", Feature.mansion),
+        OUTPOST("outpost", "Outpost", null),
+        RUINED_PORTAL("ruined_portal", "Ruined_Portal", null),
+        RUINED_PORTAL_N("ruined_portal_n", "Ruined_Portal_N", null),
+        ANCIENT_CITY("ancient_city", "Ancient_City", null),
+        TREASURE("treasure", "Treasure", Feature.buried_treasure),
+        MINESHAFT("mineshaft", "Mineshaft", Feature.mineshaft),
+        DESERT_WELL("desert_well", "Desert_Well", null),
+        GEODE("geode", "Geode", null),
+        FORTRESS("fortress", "Fortress", Feature.nether_fortress),
+        BASTION("bastion", "Bastion", Feature.bastion_remnant),
+        END_CITY("end_city", "End_City", Feature.end_city),
+        END_GATEWAY("end_gateway", "End_Gateway", null),
+        TRAIL_RUIN("trail_ruin", "Trail_Ruins", null),
+        SLIME_CHUNK("slime_chunk", null, Feature.slime_chunk),
+        STRONGHOLD("stronghold", "Stronghold", Feature.stronghold);
 
         public final String commandName;
         public final int nativeId;
         public final Feature fallbackFeature;
 
-        Structure(String commandName, int nativeId, Feature fallbackFeature) {
+        Structure(String commandName, String cubiomesMethod, Feature fallbackFeature) {
             this.commandName = commandName;
-            this.nativeId = nativeId;
+            this.nativeId = resolveNativeId(cubiomesMethod);
             this.fallbackFeature = fallbackFeature;
+        }
+
+        private static int resolveNativeId(String cubiomesMethod) {
+            if (cubiomesMethod == null) return -1;
+            int id = -1;
+            //? if >=26.1 {
+            try {
+                id = (int) Cubiomes.class.getMethod(cubiomesMethod).invoke(null);
+            } catch (ReflectiveOperationException ignored) {
+            }
+            //?}
+            return id;
         }
     }
 
@@ -179,27 +200,35 @@ public class WorldGenUtils {
         if (structureId < 0) return null;
         if (!CUBIOMES_NATIVE_LOADED) return null;
 
+        BlockPos result = null;
         try {
+            //? if >=26.1 {
             if (structureId == Cubiomes.Stronghold()) {
-                return locateNearestStronghold(x, z, seed, mcVersion);
+                result = locateNearestStronghold(x, z, seed, mcVersion);
+            } else {
+                result = locateNearestRegionStructure(structureId, x, z, seed, mcVersion);
             }
-            return locateNearestRegionStructure(structureId, x, z, seed, mcVersion);
+            //?}
         } catch (Throwable t) {
             LOG.debug("Cubiomes nearest structure lookup failed for structure {}.", structureId, t);
-            return null;
         }
+        return result;
     }
 
     private static boolean loadCubiomesNative() {
+        boolean loaded = false;
+        //? if >=26.1 {
         try {
             CubiomesInit.load();
-            return true;
+            loaded = true;
         } catch (Throwable t) {
             LOG.warn("Failed to load xpple cubiomes native library.", t);
-            return false;
         }
+        //?}
+        return loaded;
     }
 
+    //? if >=26.1 {
     private static BlockPos locateNearestStronghold(int x, int z, long seed, int mcVersion) {
         BlockPos nearest = null;
         double nearestDistanceSq = Double.POSITIVE_INFINITY;
@@ -229,7 +258,9 @@ public class WorldGenUtils {
 
         return nearest;
     }
+    //?}
 
+    //? if >=26.1 {
     private static BlockPos locateNearestRegionStructure(int structureId, int x, int z, long seed, int mcVersion) {
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment structureConfig = StructureConfig.allocate(arena);
@@ -266,6 +297,8 @@ public class WorldGenUtils {
             return new BlockPos(dev.xpple.cubiomes.Pos.x(structurePos), 0, dev.xpple.cubiomes.Pos.z(structurePos));
         }
     }
+    //?}
+
 
     private static double distSq(int x1, int z1, int x2, int z2) {
         double dx = (double) x1 - x2;

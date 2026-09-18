@@ -1,4 +1,4 @@
-//? if >=1.21.7 {
+//? if >=26.2 {
 /*
  * Implemented from Meteor Client PR #5928
  * https://github.com/MeteorDevelopment/meteor-client/pull/5928
