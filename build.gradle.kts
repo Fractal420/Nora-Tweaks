@@ -37,6 +37,7 @@ repositories {
     maven("https://maven.meteordev.org/snapshots")
     maven("https://maven.xpple.dev/maven2")
     maven("https://jitpack.io")
+    maven("https://maven.bawnorton.com/releases")
     flatDir { dirs(rootProject.file("libs")) }
     mavenCentral()
     mavenLocal()
@@ -56,8 +57,8 @@ dependencies {
     compileOnly("meteordevelopment:baritone:$baritoneVersion-SNAPSHOT") {
         isTransitive = false
     }
-    implementation("mixinsquared-fabric:mixinsquared-fabric:0.2.0")
-    include("mixinsquared-fabric:mixinsquared-fabric:0.2.0")
+    implementation("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.2.0")
+    include("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.2.0")
     shade("dev.xpple:cubiomes:$xppleCubiomesVersion") {
         isTransitive = false
     }

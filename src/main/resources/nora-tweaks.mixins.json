@@ -14,7 +14,18 @@
     "SingleModuleScreenMixin",
     "catppuccin.CatppuccinModulesScreenMixin",
     "catpuccin.CatpuccinModulesScreenMixin",
-    "rejects.MeteorRejectsAddonMixin"
+    "rejects.MeteorRejectsAddonMixin",
+    "guifix.WContainerMoveMixin",
+    "guifix.WContainerHitOrderMixin",
+    "guifix.WCategoryControllerLayoutMixin",
+    "guifix.CatppuccinCategoryControllerLayoutMixin",
+    "guifix.CatppuccinHeaderReleaseMixin",
+    "guifix.WSearchWindowSizeMixin",
+    "guifix.WWindowLayoutMixin",
+    "guifix.WWindowClampMixin",
+    "guifix.WWindowTitleAccessor",
+    "guifix.WWindowDragStateAccessor",
+    "guifix.WHeaderReleaseMixin"
   ],
   "injectors": {
     "defaultRequire": 1
