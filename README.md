@@ -4,8 +4,9 @@ Nora Tweaks is a custom addon for the [Meteor Client](https://meteorclient.com/)
 
 ## Features
 
-*   **Custom Category Manager:** Create, manage, and sort your own custom module categories, which appear seamlessly in the module list. Supports drag-and-drop reordering and moving of modules between custom categories, middle-click to remove modules from custom categories, and hiding categories.
-*   **Meteor GUI Position Fix:** Remembers and restores Meteor Client GUI window positions across sessions (saved to `config/nora-tweaks-gui-positions.json`). Also clamps windows to the screen, resolves overlaps on drag release by finding the nearest free position, and works with both the default theme and Catppuccin. (Implemented by Fractal420)
+*   **Custom Category Manager:** Create, manage, and sort your own custom module categories, which appear seamlessly in the module list.
+(Implemented by Fractal420) Supports drag-and-drop reordering and moving of modules between custom categories, middle-click to remove modules from custom categories, and hiding categories.
+*   **Meteor GUI Position Fix:** (Implemented by Fractal420) Remembers and restores Meteor Client GUI window positions across sessions (saved to `config/nora-tweaks-gui-positions.json`). Also clamps windows to the screen, resolves overlaps on drag release by finding the nearest free position, and works with both the default theme and Catppuccin.
 *   **Auto Dirt Path:** Automatically creates paths from dirt-like blocks when holding a shovel.
 *   **Auto Farm Land:** Automatically creates farm land from dirt-like blocks when holding a hoe.
 *   **Auto Farm:** Harvests and replants configured crops automatically. (Adapted from Meteor Rejects)
