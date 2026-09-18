@@ -41,7 +41,7 @@ Multi-version support uses [Stonecutter](https://stonecutter.kikugie.dev/). Shar
 |-------------|---------|------|------------------------------------------------------------|
 | **26.2**    | Full    | 25   | Default / active                                           |
 | **26.1.2**  | Full    | 25   |                                                            |
-| **1.21.11** | Partial | 21   | Build script ready; needs more API ports (not in `buildAll`) |
+| **1.21.11** | Partial | 21   | Build script ready; needs more API ports |
 
 ```bash
 ./gradlew build              # active version (26.2)
