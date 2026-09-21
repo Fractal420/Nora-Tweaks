@@ -6,9 +6,7 @@
  */
 package me.noramibu.tweaks.utils;
 
-//? if >=26.1 {
 import dev.xpple.cubiomes.Cubiomes;
-//?}
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.systems.System;
 import meteordevelopment.meteorclient.utils.Utils;
@@ -103,13 +101,7 @@ public class Seeds extends System<Seeds> {
     @Override
     public Seeds fromTag(CompoundTag tag) {
         for (String key : tag.keySet()) {
-            //? if >=1.21.5 {
             tag.getCompound(key).ifPresent(nbt -> seeds.put(key, Seed.fromTag(nbt)));
-            //?} else {
-            /*NbtCompound nbt = tag.getCompound(key);
-            if (nbt != null) seeds.put(key, Seed.fromTag(nbt));
-            */
-            //?}
         }
         return this;
     }
@@ -143,14 +135,8 @@ public class Seeds extends System<Seeds> {
         }
 
         public static Seed fromTag(CompoundTag tag) {
-            //? if >=1.21.5 {
             long storedSeed = tag.getLong("seed").orElse(0L);
             String versionName = tag.getString("version").orElse("");
-            //?} else {
-            /*long storedSeed = tag.getLong("seed");
-            String versionName = tag.getString("version");
-            */
-            //?}
             String storedVersion = resolveStoredVersion(versionName);
             return new Seed(storedSeed, storedVersion);
         }
@@ -163,16 +149,9 @@ public class Seeds extends System<Seeds> {
                 version
             ));
 
-            //? if >=1.21.5 {
             text.setStyle(text.getStyle()
                 .withClickEvent(new ClickEvent.CopyToClipboard(Long.toString(seed)))
                 .withHoverEvent(new HoverEvent.ShowText(Component.literal("Copy to clipboard"))));
-            //?} else {
-            /*text.setStyle(text.getStyle()
-                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, Long.toString(seed)))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Copy to clipboard"))));
-            */
-            //?}
 
             return text;
         }
@@ -195,7 +174,6 @@ public class Seeds extends System<Seeds> {
 
     public static List<String> getSuggestedCubiomesVersions() {
         ArrayList<String> versions = new ArrayList<>();
-        //? if >=26.1 {
         for (Method method : Cubiomes.class.getMethods()) {
             if (!isCubiomesVersionMethod(method)) continue;
 
@@ -205,7 +183,6 @@ public class Seeds extends System<Seeds> {
             String publicName = toPublicVersionName(methodName);
             if (publicName != null) versions.add(publicName);
         }
-        //?}
         versions.sort(String.CASE_INSENSITIVE_ORDER);
         return versions;
     }
@@ -226,14 +203,12 @@ public class Seeds extends System<Seeds> {
 
     private static int resolveCubiomesVersionId(String versionName) {
         int id = 0;
-        //? if >=26.1 {
         String resolved = resolveStoredVersion(versionName);
         try {
             id = (int) Cubiomes.class.getMethod(resolved).invoke(null);
         } catch (ReflectiveOperationException ignored) {
             id = Cubiomes.MC_26_2();
         }
-        //?}
         return id;
     }
 
@@ -255,13 +230,11 @@ public class Seeds extends System<Seeds> {
             majorMinorVersion(version)
         }) {
             if (candidate == null) continue;
-            //? if >=26.1 {
             try {
                 Cubiomes.class.getMethod(candidate);
                 return candidate;
             } catch (NoSuchMethodException ignored) {
             }
-            //?}
         }
         return null;
     }

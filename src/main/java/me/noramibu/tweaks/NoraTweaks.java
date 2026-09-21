@@ -8,21 +8,14 @@ import me.noramibu.tweaks.modules.AutoFarmLand;
 import me.noramibu.tweaks.modules.AutoLogStrip;
 import me.noramibu.tweaks.modules.CategoryManagerModule;
 import me.noramibu.tweaks.modules.ChatUtility;
-//? if >=26.1 {
 import me.noramibu.tweaks.modules.HotkeyUtility;
-//?}
-//? if >=26.1 {
 import me.noramibu.tweaks.modules.LegitMaceKill;
-//?}
-//? if >=26.1 {
 import me.noramibu.tweaks.modules.MaceCombo;
-//?}
 import me.noramibu.tweaks.modules.WindChargeJump;
 import me.noramibu.tweaks.modules.AutoTrapPlus;
 import me.noramibu.tweaks.modules.DeepslateESP;
 import me.noramibu.tweaks.modules.OreSim;
 import me.noramibu.tweaks.modules.PearlChecker;
-//? if >=26.2
 import me.noramibu.tweaks.modules.BetterLocator;
 import me.noramibu.tweaks.modules.AttributeSwapping;
 
@@ -60,15 +53,9 @@ public class NoraTweaks extends MeteorAddon {
         Modules.get().add(new AutoLogStrip());
         Modules.get().add(new CategoryManagerModule());
         Modules.get().add(new ChatUtility());
-        //? if >=26.1 {
         Modules.get().add(new HotkeyUtility());
-        //?}
-        //? if >=26.1 {
         Modules.get().add(new MaceCombo());
-        //?}
-        //? if >=26.1 {
         Modules.get().add(new LegitMaceKill());
-        //?}
         Modules.get().add(new WindChargeJump());
         Modules.get().add(new AutoTrapPlus());
         Modules.get().add(new DeepslateESP());
@@ -81,13 +68,11 @@ public class NoraTweaks extends MeteorAddon {
             LOG.info("Meteor Client already has attribute-swap module, skipping AttributeSwapping.");
         }
 
-        //? if >=26.2 {
         if (!isMeteorModulePresent("better-locator")) {
             Modules.get().add(new BetterLocator());
         } else {
             LOG.info("Meteor Client already has better-locator module, skipping BetterLocator.");
         }
-        //?}
 
         Modules.get().add(new OreSim());
 

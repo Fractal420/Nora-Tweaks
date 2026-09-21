@@ -35,19 +35,8 @@ Nora Tweaks is a custom addon for the [Meteor Client](https://meteorclient.com/)
 
 ## Building (for developers)
 
-Multi-version support uses [Stonecutter](https://stonecutter.kikugie.dev/). Shared sources live in `src/`.
-
-| Version     | Status  | Java | Notes                                                      |
-|-------------|---------|------|------------------------------------------------------------|
-| **26.2**    | Full    | 25   | Default / active                                           |
-| **26.1.2**  | Full    | 25   |                                                            |
-| **1.21.11** | Partial | 21   | Build script ready; needs more API ports |
+Targets **Minecraft 26.2** (Java 25).
 
 ```bash
-./gradlew build              # active version (26.2)
-./gradlew :26.2:build
-./gradlew :26.1.2:build
-./gradlew buildAll           # builds 26.1.2 + 26.2
-
-# 1.21.11 (experimental — may fail until more //? gates are added)
-./gradlew :1.21.11:build
+./gradlew build
+```

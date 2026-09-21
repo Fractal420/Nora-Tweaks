@@ -31,9 +31,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CocoaBlock;
 import net.minecraft.world.level.block.CropBlock;
-//? if >=26.1 {
 import net.minecraft.world.level.block.FarmlandBlock;
-//?}
 import net.minecraft.world.level.block.MushroomBlock;
 import net.minecraft.world.level.block.NetherWartBlock;
 import net.minecraft.world.level.block.PitcherCropBlock;
@@ -450,9 +448,7 @@ public class AutoFarming extends Module {
 
 
     private static boolean isFarmlandSoil(Block block) {
-        //? if >=26.1 {
         if (block instanceof FarmlandBlock) return true;
-        //?}
         String name = block.getClass().getName();
         return name.endsWith(".FarmBlock") || name.endsWith(".FarmlandBlock");
     }
@@ -494,11 +490,7 @@ public class AutoFarming extends Module {
     }
 
     private double getPlayerDistance(BlockPos pos) {
-        //? if >=1.21.9 {
         return mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(pos));
-        //?} else
-        /*return mc.player.getPos().distanceTo(Vec3d.ofCenter(pos));
-        */
     }
 
     private boolean isWaterNearby(LevelReader world, BlockPos pos) {
@@ -515,11 +507,7 @@ public class AutoFarming extends Module {
     private void cleanupReplantMap() {
         if (mc.player == null || replantMap.isEmpty()) return;
 
-        //? if >=1.21.9 {
         Vec3 playerPos = mc.player.position();
-        //?} else
-        /*Vec3d playerPos = mc.player.getPos();
-        */
 
         replantMap.entrySet().removeIf(entry ->
             playerPos.distanceTo(Vec3.atCenterOf(entry.getKey())) > REPLANT_MAX_DISTANCE

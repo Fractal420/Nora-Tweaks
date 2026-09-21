@@ -6,13 +6,11 @@
  */
 package me.noramibu.tweaks.utils;
 
-//? if >=26.1 {
 import dev.xpple.cubiomes.Cubiomes;
 import dev.xpple.cubiomes.CubiomesInit;
 import dev.xpple.cubiomes.Generator;
 import dev.xpple.cubiomes.StrongholdIter;
 import dev.xpple.cubiomes.StructureConfig;
-//?}
 import me.noramibu.tweaks.utils.Seeds.Seed;
 import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import net.minecraft.core.BlockPos;
@@ -24,10 +22,7 @@ import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.entity.monster.Guardian;
 import net.minecraft.world.entity.monster.Shulker;
-//? if >=26.2 {
 import net.minecraft.world.entity.monster.cubemob.Slime;
-//?} else
-// import net.minecraft.world.entity.monster.Slime;
 
 import net.minecraft.world.entity.monster.illager.Evoker;
 import net.minecraft.world.entity.monster.piglin.PiglinBrute;
@@ -39,10 +34,8 @@ import net.minecraft.world.item.component.MapDecorations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-//? if >=26.1 {
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-//?}
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -131,12 +124,10 @@ public class WorldGenUtils {
         private static int resolveNativeId(String cubiomesMethod) {
             if (cubiomesMethod == null) return -1;
             int id = -1;
-            //? if >=26.1 {
             try {
                 id = (int) Cubiomes.class.getMethod(cubiomesMethod).invoke(null);
             } catch (ReflectiveOperationException ignored) {
             }
-            //?}
             return id;
         }
     }
@@ -202,13 +193,11 @@ public class WorldGenUtils {
 
         BlockPos result = null;
         try {
-            //? if >=26.1 {
             if (structureId == Cubiomes.Stronghold()) {
                 result = locateNearestStronghold(x, z, seed, mcVersion);
             } else {
                 result = locateNearestRegionStructure(structureId, x, z, seed, mcVersion);
             }
-            //?}
         } catch (Throwable t) {
             LOG.debug("Cubiomes nearest structure lookup failed for structure {}.", structureId, t);
         }
@@ -217,18 +206,15 @@ public class WorldGenUtils {
 
     private static boolean loadCubiomesNative() {
         boolean loaded = false;
-        //? if >=26.1 {
         try {
             CubiomesInit.load();
             loaded = true;
         } catch (Throwable t) {
             LOG.warn("Failed to load xpple cubiomes native library.", t);
         }
-        //?}
         return loaded;
     }
 
-    //? if >=26.1 {
     private static BlockPos locateNearestStronghold(int x, int z, long seed, int mcVersion) {
         BlockPos nearest = null;
         double nearestDistanceSq = Double.POSITIVE_INFINITY;
@@ -258,9 +244,7 @@ public class WorldGenUtils {
 
         return nearest;
     }
-    //?}
 
-    //? if >=26.1 {
     private static BlockPos locateNearestRegionStructure(int structureId, int x, int z, long seed, int mcVersion) {
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment structureConfig = StructureConfig.allocate(arena);
@@ -297,7 +281,6 @@ public class WorldGenUtils {
             return new BlockPos(dev.xpple.cubiomes.Pos.x(structurePos), 0, dev.xpple.cubiomes.Pos.z(structurePos));
         }
     }
-    //?}
 
 
     private static double distSq(int x1, int z1, int x2, int z2) {

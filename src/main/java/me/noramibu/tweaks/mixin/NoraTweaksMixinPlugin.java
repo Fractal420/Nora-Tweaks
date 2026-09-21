@@ -11,10 +11,6 @@ import java.util.Set;
 public class NoraTweaksMixinPlugin implements IMixinConfigPlugin {
     private static final boolean CATPUCCIN_OLD_LOADED = FabricLoader.getInstance().isModLoaded("catpuccin-addon");
     private static final boolean CATPPUCCIN_LOADED = FabricLoader.getInstance().isModLoaded("catppuccin-addon");
-    private static final String MC = FabricLoader.getInstance()
-        .getModContainer("minecraft")
-        .map(c -> c.getMetadata().getVersion().getFriendlyString())
-        .orElse("");
 
     @Override
     public void onLoad(String mixinPackage) {}
@@ -43,10 +39,7 @@ public class NoraTweaksMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins() {
-        if (MC.startsWith("26.2")) {
-            return List.of("LocatorBarMixin");
-        }
-        return List.of();
+        return List.of("LocatorBarMixin");
     }
 
     @Override

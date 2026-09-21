@@ -1,6 +1,5 @@
 package me.noramibu.tweaks.modules;
 
-//? if >=26.1 {
 /**
  * Original code written by @etianl https://github.com/etianl/Trouser-Streak/blob/main/src/main/java/pwn/noobs/trouserstreak/modules/MaceKill.java
  */
@@ -95,11 +94,7 @@ public class LegitMaceKill extends Module {
         if (packetDisable.get() && (targetEntity.isBlocking() || targetEntity.isInvulnerable() || targetEntity.hasInfiniteMaterials()))
             return;
 
-        //? if >=1.21.9 {
         previouspos = mc.player.position();
-        //?} else
-        /*previouspos = mc.player.getPos();
-        */
 
         // Don't activate if fall distance is below minimum height threshold
         if (mc.player.fallDistance < minFallHeight.get()) return;
@@ -212,5 +207,3 @@ public class LegitMaceKill extends Module {
     }
 }
 
-//?} else
-// public class LegitMaceKill {}

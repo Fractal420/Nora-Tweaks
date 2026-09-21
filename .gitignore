@@ -19,5 +19,3 @@ hs_err_*.log
 *.DS_Store
 libs/*.jar
 !libs/.gitkeep
-.stonecutter/
-versions/*/src/
