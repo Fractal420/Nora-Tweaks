@@ -5,7 +5,8 @@
   "name": "Nora Tweaks",
   "description": "A tweaks mod for Meteor Client.",
   "authors": [
-    "noramibu"
+    "noramibu",
+    "Fractal42O"
   ],
   "contact": {
     "sources": "https://github.com/MeteorDevelopment/meteor-addon-template"
