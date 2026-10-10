@@ -56,8 +56,9 @@ dependencies {
     compileOnly("meteordevelopment:baritone:$baritoneVersion-SNAPSHOT") {
         isTransitive = false
     }
-    implementation("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.2.0")
-    include("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.2.0")
+    shade("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.2.0") {
+        isTransitive = false
+    }
     shade("dev.xpple:cubiomes:$xppleCubiomesVersion") {
         isTransitive = false
     }

@@ -93,6 +93,7 @@ public class ModuleDragController {
 
     public static void endDrag(double mx, double my) {
         boolean didDrag = dragging;
+        WWidget source = sourceWidget;
         if (dragging && module != null) {
             resolveDropTarget(mx, my);
             if (validDrop && targetCategoryKey != null && targetWindow != null) {
@@ -103,7 +104,17 @@ public class ModuleDragController {
                 }
             }
         }
-        if (didDrag) suppressToggle = true;
+        if (didDrag) {
+            suppressToggle = true;
+            if (source instanceof meteordevelopment.meteorclient.gui.widgets.pressable.WPressable pressable) {
+                try {
+                    java.lang.reflect.Field pressedField = meteordevelopment.meteorclient.gui.widgets.pressable.WPressable.class.getDeclaredField("pressed");
+                    pressedField.setAccessible(true);
+                    pressedField.setBoolean(pressable, false);
+                } catch (Throwable ignored) {
+                }
+            }
+        }
         reset();
     }
 
@@ -113,6 +124,18 @@ public class ModuleDragController {
             return true;
         }
         return false;
+    }
+
+    public static boolean shouldSuppressToggle(WWidget widget) {
+        if (suppressToggle) return true;
+        if (sourceWidget != null && sourceWidget == widget) {
+            return dragging || (pending && (Math.abs(mouseX - startX) > 1 || Math.abs(mouseY - startY) > 1));
+        }
+        return false;
+    }
+
+    public static boolean isSourceWidget(WWidget widget) {
+        return sourceWidget != null && sourceWidget == widget;
     }
 
     public static void cancel() {

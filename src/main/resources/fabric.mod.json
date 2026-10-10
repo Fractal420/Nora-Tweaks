@@ -9,7 +9,7 @@
     "Fractal42O"
   ],
   "contact": {
-    "sources": "https://github.com/MeteorDevelopment/meteor-addon-template"
+    "sources": "https://github.com/noramibu/Nora-Tweaks"
   },
   "icon": "assets/nora-tweaks/icon.png",
   "environment": "client",
@@ -33,7 +33,7 @@
     }
   },
   "depends": {
-    "java": ">=21",
+    "java": ">=25",
     "minecraft": "${minecraft_version}",
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",

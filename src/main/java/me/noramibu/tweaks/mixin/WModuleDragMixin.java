@@ -41,20 +41,26 @@ public abstract class WModuleDragMixin extends WWidget {
     private void nora$onModuleMouseReleased(MouseButtonEvent click, CallbackInfoReturnable<Boolean> cir) {
         if (click.button() != MOUSE_BUTTON_LEFT) return;
 
-        if (ModuleDragController.consumeSuppressToggle()) {
+        WWidget self = (WWidget) (Object) this;
+        boolean isSource = ModuleDragController.isSourceWidget(self);
+
+        if (ModuleDragController.shouldSuppressToggle(self) || ModuleDragController.consumeSuppressToggle()) {
+            if (isSource || ModuleDragController.isDragging()) {
+                ModuleDragController.endDrag(click.x(), click.y());
+            }
             pressed = false;
             cir.setReturnValue(true);
             return;
         }
 
-        Module module = ModuleDragController.extractModule((WWidget) (Object) this);
+        Module module = ModuleDragController.extractModule(self);
         if (module == null) return;
 
         if (ModuleDragController.isDragging() || ModuleDragController.cancelClickToggle()) {
             ModuleDragController.endDrag(click.x(), click.y());
             pressed = false;
             cir.setReturnValue(true);
-        } else if (ModuleDragController.isPending()) {
+        } else if (ModuleDragController.isPending() && isSource) {
             ModuleDragController.cancel();
         }
     }

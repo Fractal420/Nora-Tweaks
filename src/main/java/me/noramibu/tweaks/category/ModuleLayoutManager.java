@@ -165,7 +165,8 @@ public class ModuleLayoutManager {
         if (modules == null || modules.isEmpty()) return modules;
         String key = customKey(category.name);
         List<String> order = orders.get(key);
-        if (order == null || order.isEmpty()) {
+        boolean useSavedOrder = order != null && !order.isEmpty() && category.sortOrder == SortOrder.WEIGHT;
+        if (!useSavedOrder) {
             modules.sort(switch (category.sortOrder) {
                 case WEIGHT -> java.util.Comparator
                     .comparingInt((Module m) -> CustomCategoryManager.getModuleWeight(m, category))
@@ -253,6 +254,13 @@ public class ModuleLayoutManager {
         save();
     }
 
+    public static void clearOrder(String categoryKey) {
+        if (categoryKey == null) return;
+        orders.remove(categoryKey);
+        save();
+        postChange();
+    }
+
     public static String categoryKeyForWindow(String windowId) {
         if (windowId == null) return null;
         if (windowId.startsWith("custom-")) return windowId;
@@ -275,6 +283,26 @@ public class ModuleLayoutManager {
 
     private static void insertIntoOrder(String key, String moduleName, int insertIndex) {
         List<String> order = orders.computeIfAbsent(key, k -> new ArrayList<>());
+        if (order.isEmpty()) {
+            CustomCategory cat = findCustom(stripCustomKey(key));
+            if (cat != null) {
+                List<ModuleConfig> configs = getConfigs(cat);
+                List<Module> current = new ArrayList<>();
+                Modules modules = Modules.get();
+                if (modules != null) {
+                    for (ModuleConfig mc : configs) {
+                        Module m = modules.get(mc.moduleName);
+                        if (m != null) current.add(m);
+                    }
+                }
+                if (!current.isEmpty()) {
+                    orderCustomModules(cat, current);
+                    for (Module m : current) {
+                        if (!m.name.equals(moduleName)) order.add(m.name);
+                    }
+                }
+            }
+        }
         order.remove(moduleName);
         if (insertIndex < 0 || insertIndex > order.size()) {
             order.add(moduleName);
