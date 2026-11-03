@@ -13,7 +13,8 @@ import net.minecraft.client.input.MouseButtonEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(WContainer.class)
@@ -47,21 +48,24 @@ public abstract class WContainerHitOrderMixin {
         if (dropdown != null && dropdown.mouseReleased(click)) cir.setReturnValue(true);
     }
 
-    @Redirect(
+    // Use @WrapOperation instead of @Redirect to avoid MixinExtras
+    // FactoryRedirectWrapperMixinTransformer ClassCastException
+    // (ArrayList cannot be cast to AnnotationNode) on newer Mixin/MixinExtras.
+    @WrapOperation(
         method = "mouseClicked",
         at = @At(value = "INVOKE", target = "Ljava/util/List;iterator()Ljava/util/Iterator;"),
         require = 0
     )
-    private Iterator<?> noraGuiFix$reverseClickOrder(List<?> list) {
+    private Iterator<?> noraGuiFix$reverseClickOrder(List<?> list, Operation<Iterator<?>> original) {
         return reverse(list);
     }
 
-    @Redirect(
+    @WrapOperation(
         method = "mouseReleased",
         at = @At(value = "INVOKE", target = "Ljava/util/List;iterator()Ljava/util/Iterator;"),
         require = 0
     )
-    private Iterator<?> noraGuiFix$reverseReleaseOrder(List<?> list) {
+    private Iterator<?> noraGuiFix$reverseReleaseOrder(List<?> list, Operation<Iterator<?>> original) {
         return reverse(list);
     }
 

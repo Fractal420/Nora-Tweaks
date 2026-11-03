@@ -11,7 +11,8 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
 public abstract class CatppuccinModulesScreenDragMixin extends WContainer {
     @Shadow public List<WWindow> windows;
 
-    @Redirect(
+    @WrapOperation(
         method = "init",
         at = @At(
             value = "INVOKE",
@@ -29,7 +30,7 @@ public abstract class CatppuccinModulesScreenDragMixin extends WContainer {
         ),
         require = 0
     )
-    private List<Module> nora$orderedGroup(Modules modules, Category category) {
+    private List<Module> nora$orderedGroup(Modules modules, Category category, Operation<List<Module>> original) {
         return ModuleLayoutManager.getModulesForDefaultCategory(category);
     }
 

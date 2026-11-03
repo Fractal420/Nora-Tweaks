@@ -1,3 +1,8 @@
+// 1.21.11 is experimental / partial.
+// Loom may print "Cannot remap ..." warnings for dependency intermediate
+// names (Baritone, some Fabric API methods). These are harmless and do
+// not fail the build. Full support is on 26.1.2 and 26.2.
+
 plugins {
     id("dev.kikugie.stonecutter")
     id("net.fabricmc.fabric-loom-remap") version "1.17.20"
