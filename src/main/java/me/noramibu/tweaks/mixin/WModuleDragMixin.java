@@ -1,6 +1,7 @@
 package me.noramibu.tweaks.mixin;
 
 import me.noramibu.tweaks.category.ModuleDragController;
+import me.noramibu.tweaks.modules.CategoryManagerModule;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.gui.widgets.pressable.WPressable;
 import meteordevelopment.meteorclient.systems.modules.Module;
@@ -24,6 +25,14 @@ public abstract class WModuleDragMixin extends WWidget {
 
         Module module = ModuleDragController.extractModule((WWidget) (Object) this);
         if (module == null) return;
+
+        // Left-click Category Manager → open its screen instead of toggling.
+        if (click.button() == MOUSE_BUTTON_LEFT && module instanceof CategoryManagerModule) {
+            pressed = false;
+            CategoryManagerModule.openScreen();
+            cir.setReturnValue(true);
+            return;
+        }
 
         if (click.button() == MOUSE_BUTTON_MIDDLE) {
             if (ModuleDragController.removeFromCustomCategory(module, (WWidget) (Object) this)) {
@@ -49,6 +58,14 @@ public abstract class WModuleDragMixin extends WWidget {
 
         Module module = ModuleDragController.extractModule((WWidget) (Object) this);
         if (module == null) return;
+
+        // Don't let a pending drag cancel/toggle Category Manager either.
+        if (module instanceof CategoryManagerModule) {
+            ModuleDragController.cancel();
+            pressed = false;
+            cir.setReturnValue(true);
+            return;
+        }
 
         if (ModuleDragController.isDragging() || ModuleDragController.cancelClickToggle()) {
             ModuleDragController.endDrag(click.x(), click.y());
